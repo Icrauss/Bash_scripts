@@ -1,0 +1,132 @@
+#!/bin/env bash
+# flags 1, 2 and 3 are respectively the coeficients A, B and C
+
+if [[ -n $1 ]]; then
+
+    A=$1
+
+    if [[ ! $A =~ ^[+-]?[0-9]+(\.[0-9]+)?$ ]]; then # vê se A não é número depois de definido
+    echo "Usage: bhaskara [A] [B] [C]
+    Solves a trinomial quadratic equation.
+    Flags 1, 2 and 3 define the value of coeficients A, B and C (ax² + bx + c = 0).
+    Minimally, the value of A must be defined.
+
+    Using decimal numbers for A or C causes square roots of decimal numbers"
+    exit 0
+    fi
+else
+    echo "Usage: bhaskara [A] [B] [C]
+    Solves a trinomial quadratic equation
+    Flags 1, 2 and 3 define the value of coeficients A, B and C (ax² + bx + c = 0)
+    Minimally, the value of A must be defined
+
+    Using decimal numbers for A or C causes square roots of decimal numbers"
+    exit 0
+fi
+
+if [[ -n $2 ]]; then
+    B=$2
+else
+    B=0
+fi
+
+if [[ -n $3 ]]; then
+    C=$3
+else
+    C=0
+fi
+
+if [[ $B = 0 ]]; then
+    Biszero=true
+fi
+
+if [[ $C = 0 ]]; then
+    Ciszero=true
+fi
+
+if [[ $Biszero == true && $Ciszero == true ]]; then
+    echo "x = 0"
+    exit 0
+fi
+
+Delta=$(echo "($B * $B) - (4 * $A * $C)" | bc -l)
+DeltaRound=$(echo "scale=0; ($B * $B) - (4 * $A * $C)" | bc -l)
+
+if (( $(echo "$Delta > $DeltaRound" | bc -l) )); then
+    Deltaisdecimal=true
+else
+    Deltaisdecimal=false
+fi
+
+if (( $(echo "$Delta > 0" | bc -l) )); then
+    Deltastate=true
+    SqrtDelta=$(echo "scale=10; sqrt($Delta)" | bc)
+    RoundSqrtDelta=$(echo "scale=0;sqrt($Delta)" | bc)
+elif [[ $Delta = 0 ]]; then
+    Deltastate=true
+    SqrtDelta=0
+    RoundSqrtDelta=0
+else
+    Deltastate=false
+    NegDelta=$(echo "${Delta#-}")
+    SqrtDelta=$(echo "scale=10;sqrt($NegDelta)" | bc)
+    RoundSqrtDelta=$(echo "scale=0;sqrt($NegDelta)" | bc)
+fi
+
+if (( $(echo "$SqrtDelta > $RoundSqrtDelta" | bc -l) )); then
+    decimal=true
+else
+    decimal=false
+fi
+
+if [[ $Deltastate = false && $decimal = true ]]; then
+    result=$(echo "√$Delta")
+    simplifiable=false2
+elif [[ $Deltastate = true && $decimal = false ]]; then
+    result=$(echo "$RoundSqrtDelta")
+    simplifiable=true
+elif [[ $Deltastate = true && $decimal = true ]]; then
+    result=$(echo "√$Delta" )
+    simplifiable=false
+elif [[ $Deltastate = false && $decimal = false ]]; then
+    result=$(echo "$RoundSqrtDelta""i")
+    simplifiable=true2
+fi
+
+a2=$(echo "2 * $A" | bc)
+Bminus=$(echo "$B * -1" | bc)
+
+if [[ $simplifiable = true ]]; then
+    numerador1=$(echo "($B * -1) + $result" | bc)
+    numerador2=$(echo "($B * -1) - $result" | bc)
+    realresult1=$(echo "(($B * -1) + $result)" | bc)" / $a2"
+    realresult2=$(echo "(($B * -1) - $result)" | bc)" / $a2"
+    if (( $(echo "$numerador1 % $a2 == 0" | bc -l) )); then
+        realresult1=$(echo "$numerador1 / $a2" | bc)
+    fi
+    if (( $(echo "$numerador2 % $a2 == 0" | bc -l) )); then
+        realresult2=$(echo "$numerador2 / $a2" | bc)
+    fi
+    echo "x' = $realresult1"
+    echo "x\" = $realresult2"
+elif [[ $simplifiable = true2 ]]; then
+    result=$(echo "$result" | tr -d 'i')
+    if (( $result && $Bminus % $a2 == 0)); then
+        numerador1=$(echo "($B * -1) + $result" | bc)
+        realresult1=$(echo "($Bminus / $a2)" | bc)
+        realresult11=$(echo "($result / $a2)" | bc)"i"
+        if [[ $realresult11 = "1i" ]]; then
+            realresult11="i"
+        fi
+        echo "x = $realresult1 ± $realresult11"
+    fi
+elif [[ $simplifiable = false2 ]]; then
+    result=$(echo "$result" | tr '√-' 'i√')
+    if [[ $Biszero = true ]]; then
+    echo "x = $result / $a2"
+    else
+    echo "x = ($Bminus ± $result) / $a2"
+    fi
+else 
+    echo "x = ($Bminus ± √$Delta) / $a2"
+fi
