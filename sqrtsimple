@@ -1,0 +1,59 @@
+#!/bin/env bash
+if [[ -n $1 ]]; then
+    N=$1
+    if [[ ! $N =~ ^[i√+-]+[0-9]+$ ]]; then
+        echo "\"$N\" is not a valid integer for root simplification"
+    fi
+else
+    echo "root to simplify wasn't specified"
+fi
+if [[ $N =~ "i" || $N =~ "-" ]]; then
+    imaginary=true
+fi
+if [[ $N =~ "i" && $N =~ "-" ]]; then
+    imaginary=true2
+fi
+Ntr=$(echo "$N" | tr -d 'i√-')
+Ntrfct=$(factor --exponents 2 $Ntr)
+result1="${Ntrfct##*:\ }"
+read -ra array <<< "$result1"
+symbol="^"
+for i in "${array[@]}"; do
+    if [[ "$i" =~ "^" ]]; then
+        exponent=${i#*$symbol}
+        numerator=${i%$symbol*}
+        if (($exponent % 2 == 0)); then
+                exponent=$(echo "$exponent / 2" | bc)
+                i=$numerator"^"$exponent
+                arrayexponent+=("$i")
+        else
+            exponent=$(( $exponent - 1 ))
+            arrayroot+=("$numerator")
+            exponent=$(echo "$exponent / 2" | bc)
+            i="$numerator"^"$exponent"
+            arrayexponent+=("$i")
+        fi
+    else
+        arrayroot+=("$i")
+    fi
+done
+root3=$(echo ${arrayroot[@]}| tr " " "*" | bc)
+numerator3=$(echo ${arrayexponent[@]} | tr " " "*" | bc)
+# To get it's output into another script, "$(sqrtsimple $number)" will have the value of the simplification
+if [[ $root3 = "" ]]; then
+    if [[ $imaginary = true ]]; then
+        echo "i"$numerator3
+    elif [[ $imaginary == true2 ]]; then
+        echo "-i"$numerator3
+    else
+        echo $numerator3
+    fi
+else
+    if [[ $imaginary = true ]]; then
+        echo "i"$numerator3√$root3
+    elif [[ $imaginary = true2 ]]; then
+        echo "-i"$numerator3√$root3
+    else
+        echo $numerator3√$root3
+    fi
+fi
