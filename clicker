@@ -22,3 +22,5 @@ for ((i=0; i<=$X; i++)); do
     xdotool click 1
     sleep $Y
 done
+# OBS: xdotool package needed
+# OBS2: first flag is how many iterations is it going to have, second flag is the delay between clicks
