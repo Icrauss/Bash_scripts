@@ -1,0 +1,21 @@
+#!/bin/env bash
+
+max=$1
+roll=$2
+if [[ -n $1 ]]; then
+    max=$1
+else
+    echo -e "\e[1mno flags specified\e[0m"
+    exit 0
+fi
+if [[ -n $2 ]]; then
+    roll=$2
+else
+    roll=1
+fi
+if ((roll > 100)); then
+    roll=100
+fi
+for ((i=1; i<=roll; i++)); do
+    echo -e "\e[2m$i \e[0m""->""\e[1;36m $(( ($RANDOM %$max) + 1 ))\e[0m"
+done
