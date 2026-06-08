@@ -9,11 +9,11 @@ else
     exit 0
 fi
 
-cd ~/Desktop/VScode/C++/scripts/
+cd ~/Desktop/VScode/C++/scripts/ # Colocar o caminho do diretório do script
 
 g++ -o Executable $A
 chmod +x ./Executable
-Executable
+./Executable
 rm Executable
 
 # roda um script de c++, ao exportá-lo para executável, executá-lo e deletar o executável
